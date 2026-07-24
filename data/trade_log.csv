@@ -1,0 +1,8 @@
+date,action,ticker,quantity,price,reasoning
+2026-07-24,BUY,GOOGL_US_EQ,29.0,318.15,"Cheap at 15.9x PE for 24% rev growth, RSI 25 oversold, near long-term trend support"
+2026-07-24,BUY,NVO_US_EQ,190.0,48.92,"11.7x PE, 71% ROE, 24% rev growth; selloff on Lilly litigation/GLP-1 competition looks overdone vs fundamentals"
+2026-07-24,BUY,JPM_US_EQ,24.0,350.32,"15x PE, 30% rev growth, breaking out to 52w highs; cheap quality bank"
+2026-07-24,BUY,MSFT_US_EQ,22.0,383.39,"Quality compounder down 29% from highs, 34% ROE, low debt; RSI neutral not overbought"
+2026-07-24,BUY,AMZN_US_EQ,34.0,232.0,"Reasonable valuation for 75% earnings growth, mild 16% pullback, RSI approaching oversold"
+2026-07-24,BUY,V_US_EQ,20.0,354.56,"High-ROE (60%) payments compounder, fairly valued, steady uptrend"
+2026-07-24,BUY,AZNl_EQ,39.0,12692.0,"Cheap forward PE 14.8x, RSI 28.6 oversold, UK/pharma + currency diversification"

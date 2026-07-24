@@ -1,0 +1,177 @@
+{
+  "cli-buy-GOOGL_US_EQ-1784904614": {
+    "status": "submitted",
+    "ticker": "GOOGL_US_EQ",
+    "quantity": 29.0,
+    "result": {
+      "id": 52400267924,
+      "strategy": "QUANTITY",
+      "type": "MARKET",
+      "ticker": "GOOGL_US_EQ",
+      "quantity": 29.0,
+      "filledQuantity": 0,
+      "status": "NEW",
+      "currency": "GBP",
+      "extendedHours": false,
+      "initiatedFrom": "API",
+      "side": "BUY",
+      "createdAt": "2026-07-24T17:50:15.363+03:00",
+      "instrument": {
+        "ticker": "GOOGL_US_EQ",
+        "name": "Alphabet (Class A)",
+        "isin": "US02079K3059",
+        "currency": "USD"
+      }
+    }
+  },
+  "cli-buy-NVO_US_EQ-1784904653": {
+    "status": "submitted",
+    "ticker": "NVO_US_EQ",
+    "quantity": 190.0,
+    "result": {
+      "id": 52400267953,
+      "strategy": "QUANTITY",
+      "type": "MARKET",
+      "ticker": "NVO_US_EQ",
+      "quantity": 190.0,
+      "filledQuantity": 0,
+      "status": "NEW",
+      "currency": "GBP",
+      "extendedHours": false,
+      "initiatedFrom": "API",
+      "side": "BUY",
+      "createdAt": "2026-07-24T17:50:54.180+03:00",
+      "instrument": {
+        "ticker": "NVO_US_EQ",
+        "name": "Novo Nordisk",
+        "isin": "US6701002056",
+        "currency": "USD"
+      }
+    }
+  },
+  "cli-buy-JPM_US_EQ-1784904658": {
+    "status": "submitted",
+    "ticker": "JPM_US_EQ",
+    "quantity": 24.0,
+    "result": {
+      "id": 52400267965,
+      "strategy": "QUANTITY",
+      "type": "MARKET",
+      "ticker": "JPM_US_EQ",
+      "quantity": 24.0,
+      "filledQuantity": 0,
+      "status": "NEW",
+      "currency": "GBP",
+      "extendedHours": false,
+      "initiatedFrom": "API",
+      "side": "BUY",
+      "createdAt": "2026-07-24T17:50:58.964+03:00",
+      "instrument": {
+        "ticker": "JPM_US_EQ",
+        "name": "JPMorgan Chase & Co",
+        "isin": "US46625H1005",
+        "currency": "USD"
+      }
+    }
+  },
+  "cli-buy-MSFT_US_EQ-1784904663": {
+    "status": "submitted",
+    "ticker": "MSFT_US_EQ",
+    "quantity": 22.0,
+    "result": {
+      "id": 52400267970,
+      "strategy": "QUANTITY",
+      "type": "MARKET",
+      "ticker": "MSFT_US_EQ",
+      "quantity": 22.0,
+      "filledQuantity": 0,
+      "status": "NEW",
+      "currency": "GBP",
+      "extendedHours": false,
+      "initiatedFrom": "API",
+      "side": "BUY",
+      "createdAt": "2026-07-24T17:51:03.930+03:00",
+      "instrument": {
+        "ticker": "MSFT_US_EQ",
+        "name": "Microsoft",
+        "isin": "US5949181045",
+        "currency": "USD"
+      }
+    }
+  },
+  "cli-buy-AMZN_US_EQ-1784904668": {
+    "status": "submitted",
+    "ticker": "AMZN_US_EQ",
+    "quantity": 34.0,
+    "result": {
+      "id": 52400267979,
+      "strategy": "QUANTITY",
+      "type": "MARKET",
+      "ticker": "AMZN_US_EQ",
+      "quantity": 34.0,
+      "filledQuantity": 0,
+      "status": "NEW",
+      "currency": "GBP",
+      "extendedHours": false,
+      "initiatedFrom": "API",
+      "side": "BUY",
+      "createdAt": "2026-07-24T17:51:08.868+03:00",
+      "instrument": {
+        "ticker": "AMZN_US_EQ",
+        "name": "Amazon",
+        "isin": "US0231351067",
+        "currency": "USD"
+      }
+    }
+  },
+  "cli-buy-V_US_EQ-1784904673": {
+    "status": "submitted",
+    "ticker": "V_US_EQ",
+    "quantity": 20.0,
+    "result": {
+      "id": 52400267984,
+      "strategy": "QUANTITY",
+      "type": "MARKET",
+      "ticker": "V_US_EQ",
+      "quantity": 20.0,
+      "filledQuantity": 0,
+      "status": "NEW",
+      "currency": "GBP",
+      "extendedHours": false,
+      "initiatedFrom": "API",
+      "side": "BUY",
+      "createdAt": "2026-07-24T17:51:13.479+03:00",
+      "instrument": {
+        "ticker": "V_US_EQ",
+        "name": "Visa",
+        "isin": "US92826C8394",
+        "currency": "USD"
+      }
+    }
+  },
+  "cli-buy-AZNl_EQ-1784904679": {
+    "status": "submitted",
+    "ticker": "AZNl_EQ",
+    "quantity": 39.0,
+    "result": {
+      "id": 52400267991,
+      "strategy": "QUANTITY",
+      "type": "MARKET",
+      "ticker": "AZNl_EQ",
+      "quantity": 39.0,
+      "filledQuantity": 0,
+      "status": "NEW",
+      "currency": "GBP",
+      "extendedHours": false,
+      "initiatedFrom": "API",
+      "side": "BUY",
+      "createdAt": "2026-07-24T17:51:19.439+03:00",
+      "instrument": {
+        "ticker": "AZNl_EQ",
+        "name": "AstraZeneca",
+        "isin": "GB0009895292",
+        "currency": "GBX"
+      }
+    }
+  }
+}
