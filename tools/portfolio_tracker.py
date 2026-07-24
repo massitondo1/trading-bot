@@ -10,7 +10,9 @@ Usage as a script:
     python tools/portfolio_tracker.py log-trade BUY AAPL_US_EQ 2 195.30 "strong FCF growth, hybrid screen pick"
     python tools/portfolio_tracker.py snapshot 10432.11
     python tools/portfolio_tracker.py performance
+    python tools/portfolio_tracker.py position-performance
 """
+import json
 import sys
 from pathlib import Path
 from datetime import date
@@ -21,6 +23,7 @@ import yfinance as yf
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 TRADE_LOG = DATA_DIR / "trade_log.csv"
 HISTORY_LOG = DATA_DIR / "portfolio_history.csv"
+CURRENT_HOLDINGS_FILE = DATA_DIR / "current_holdings.json"
 
 TRADE_COLUMNS = ["date", "action", "ticker", "quantity", "price", "reasoning"]
 HISTORY_COLUMNS = ["date", "portfolio_value", "sp500_close"]
@@ -74,6 +77,41 @@ def performance() -> dict:
     }
 
 
+def position_performance() -> list:
+    """
+    Joins data/current_holdings.json (live prices/weights) with the full
+    trade_log.csv history for each ticker, so thesis-at-entry can be compared
+    against what actually happened. This is the input for retrospective
+    learning -- see workflows/cloud_research.md's retrospective step.
+    """
+    if not CURRENT_HOLDINGS_FILE.exists():
+        return []
+    holdings = json.loads(CURRENT_HOLDINGS_FILE.read_text())["holdings"]
+
+    _ensure_files()
+    trades = pd.read_csv(TRADE_LOG)
+
+    results = []
+    for h in holdings:
+        ticker = h["ticker"]
+        ticker_trades = trades[trades["ticker"] == ticker].sort_values("date")
+        buys = ticker_trades[ticker_trades["action"] == "BUY"]
+        first_buy_date = buys.iloc[0]["date"] if not buys.empty else None
+        days_held = (date.today() - date.fromisoformat(first_buy_date)).days if first_buy_date else None
+
+        results.append({
+            "ticker": ticker,
+            "first_entry_date": first_buy_date,
+            "days_held": days_held,
+            "avg_price_paid": h["avg_price_paid"],
+            "current_price": h["current_price"],
+            "return_pct": h["unrealized_pl_pct"],
+            "weight_pct": h["weight_pct"],
+            "trade_history": ticker_trades[["date", "action", "quantity", "price", "reasoning"]].to_dict("records"),
+        })
+    return results
+
+
 def _main():
     import json
     if len(sys.argv) < 2:
@@ -88,6 +126,8 @@ def _main():
         print(json.dumps(snapshot(float(sys.argv[2])), indent=2, default=str))
     elif cmd == "performance":
         print(json.dumps(performance(), indent=2, default=str))
+    elif cmd == "position-performance":
+        print(json.dumps(position_performance(), indent=2, default=str))
     else:
         print(f"Unknown command: {cmd}")
         print(__doc__)

@@ -175,6 +175,19 @@ early November) since the cron doesn't auto-adjust. Revisit twice a year.
   Stocks & Shares ISA accounts, not SIPP -- confirm which account type the
   API key belongs to if account endpoints ever 403.
 
+## Learning loop (strategy side)
+Every cloud research session starts with a retrospective step (see
+`workflows/cloud_research.md` step 2): it runs
+`tools/portfolio_tracker.py position-performance` to compare each holding's
+actual return against the exact reasoning written at entry, and writes dated
+findings to `data/lessons_learned.json` -- what worked, what didn't, and
+whether it was right for the right reason. Future research sessions read
+this file before screening anything, so patterns compound instead of
+resetting every run. This is the strategy/outcome equivalent of this file's
+own "Edge cases" section below, which captures technical/process lessons
+(API quirks, auth issues) instead -- see `CLAUDE.md`'s self-improvement loop
+for that side.
+
 ## Escalation
 If something fails in a way that could affect real money (unexpected auth
 error switching modes, an order result that doesn't match what was requested,

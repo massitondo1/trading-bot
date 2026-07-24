@@ -1,0 +1,11 @@
+{
+  "entries": [
+    {
+      "date": "2026-07-24",
+      "category": "process",
+      "ticker": null,
+      "observation": "Bootstrapped the strategy with a 7-position portfolio (GOOGL, NVO, JPM, MSFT, AMZN, V, AZN-LSE) using a hybrid fundamentals+technicals screen across 15 candidates. Rejected ASML/COST/CAT (too expensive), XOM (RSI 84.7, badly overbought), UNH/PG (weak growth), LLY (correlated with NVO, worse entry).",
+      "lesson": "No performance data yet to draw a real lesson from -- this entry exists so the retrospective process has a starting point. Revisit these 7 theses in ~2-4 weeks and check whether the RSI-oversold-plus-cheap-valuation combination (used for GOOGL, NVO, AZN) actually outperformed the momentum/breakout pick (JPM) or the quality-at-a-discount picks (MSFT, AMZN, V)."
+    }
+  ]
+}
