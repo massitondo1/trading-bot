@@ -1,20 +1,47 @@
 # Workflow: Autonomous Trading Bot
 
 ## Objective
-Run a daily research-and-trade cycle on a global stocks/ETFs universe, aiming
-to beat the S&P 500 over the long run, while staying inside fixed risk limits.
-Execute trades autonomously (no per-trade confirmation needed) but always
-notify the user on Slack after any trade, and log everything.
+Run a research-and-trade cycle on a global stocks/ETFs universe, three times
+a day (pre-market, midday, post-market), aiming to beat the S&P 500 over the
+long run, while staying inside fixed risk limits. Execute trades autonomously
+(no per-trade confirmation needed) but always notify the user on Slack after
+any trade, and log everything.
+
+## Architecture: split across cloud (research) and local (execution)
+This bot runs in two halves that never share credentials:
+
+1. **Cloud research agent** (scheduled via claude.ai routines, repo
+   `massitondo1/trading-bot`) -- no Trading 212/Slack credentials, does pure
+   research and writes `research/latest_recommendations.json`. Its full SOP
+   is [`workflows/cloud_research.md`](cloud_research.md) -- read that for the
+   research methodology.
+2. **Local executor** (`tools/apply_recommendations.py`, run via `launchd` on
+   the user's Mac through `tools/run_local_cycle.sh`) -- holds the real
+   credentials in `.env`. Reads the cloud's recommendations, applies the hard
+   risk limits below (which the cloud does NOT enforce -- it only recommends
+   within them), executes what qualifies, logs it, snapshots the portfolio,
+   notifies Slack, and pushes updated state back to the repo so the next
+   cloud session has fresh context.
+
+Git is the handoff mechanism between the two halves -- see "Data flow" below.
+This document describes the local-execution half in detail; this is the only
+half that can be reasoned about as a fixed, deterministic procedure. The
+research half is intentionally judgment-driven and documented separately.
 
 ## Status
 Currently running against the **Trading 212 practice/demo account**
 (`TRADING212_API_MODE=demo` in `.env`).
 
-**First cycle executed 2026-07-24**: built a 7-position starting portfolio
-(GOOGL, NVO, JPM, MSFT, AMZN, V, AZN-LSE) at £42,724 invested / £49,970.96
-total value, ~14.4% cash reserve. Baseline snapshot logged against S&P 500
-close of 7,414.78 in `data/portfolio_history.csv` -- this is the reference
-point all future alpha calculations run from. Trade log in `data/trade_log.csv`.
+**First cycle executed 2026-07-24** (manual, before scheduling existed):
+built a 7-position starting portfolio (GOOGL, NVO, JPM, MSFT, AMZN, V,
+AZN-LSE) at £42,724 invested / £49,970.96 total value, ~14.4% cash reserve.
+Baseline snapshot logged against S&P 500 close of 7,414.78 in
+`data/portfolio_history.csv` -- this is the reference point all future alpha
+calculations run from. Trade log in `data/trade_log.csv`.
+
+**Scheduling set up 2026-07-24**: 3x/day cloud research routines (pre-market,
+midday, post-market) plus matching local `launchd` executor jobs. See
+"Schedule" section below for exact times and routine IDs.
 
 Do NOT switch to `live` until:
 - At least 4-6 weeks of demo trading history exists in `data/trade_log.csv`
@@ -35,43 +62,79 @@ Do NOT switch to `live` until:
   endpoint is beta and not idempotent, retries can duplicate a live order
 
 ## Inputs required
-- `.env` populated with `TRADING212_API_KEY`, `TRADING212_API_MODE`, `SLACK_WEBHOOK_URL`
-- A watchlist / candidate universe (start from S&P 500 + a handful of
-  UK/European large caps; can expand over time)
+- `.env` populated with `TRADING212_API_KEY`, `TRADING212_API_SECRET`,
+  `TRADING212_API_MODE`, `SLACK_WEBHOOK_URL` (local only -- never present in
+  the cloud repo checkout)
+- `research/latest_recommendations.json` written by the cloud research agent
 
 ## Tools used
-- `tools/market_research.py` -- fundamentals, technicals, news per ticker (no API key needed)
-- `tools/trading212_client.py` -- account/cash/portfolio state, place orders
+- `tools/market_research.py` -- fundamentals, technicals, news per ticker (no API key needed; used by the cloud agent)
+- `tools/trading212_client.py` -- account/cash/portfolio state, place orders (local only, needs credentials)
+- `tools/apply_recommendations.py` -- the deterministic risk-gated executor described below (local only)
+- `tools/refresh_instruments_reference.py` -- weekly refresh of `data/instruments_reference.json`, called automatically by `run_local_cycle.sh`
 - `tools/portfolio_tracker.py` -- trade log + daily snapshot + performance vs S&P 500
 - `tools/slack_notify.py` -- send a message after every trade and on any error
+- `tools/run_local_cycle.sh` -- the launchd entry point: git pull -> refresh instrument reference if stale -> `apply_recommendations.py` -> git add/commit/push `data/`
 
-## Daily cycle
+## Data flow (how cloud and local hand off without sharing credentials)
+```
+cloud research agent                       local executor (has credentials)
+--------------------                       ------------------------------
+reads data/current_holdings.json     <---- writes after every run
+reads data/watchlist.json                  (git pull happens first)
+reads data/instruments_reference.json <--- refreshed weekly
+reads data/portfolio_history.csv     <----
+writes research/latest_recommendations.json
+writes data/watchlist.json
+git push                             ----> git pull, then acts on the
+                                            recommendations file
+```
+Both sides only ever write to their own designated files, so conflicts should
+be rare; both always `git pull` before doing anything and push immediately
+after, keeping the divergence window small.
 
-1. **Pull current state**
-   - `trading212_client.get_cash()` and `get_portfolio()` to know cash available and current holdings
-   - `portfolio_tracker.snapshot(total_portfolio_value)` to log today's value vs S&P 500 close
+## Local execution cycle (`apply_recommendations.py`, runs 3x/day)
 
-2. **Screen candidates**
-   - For each ticker in the watchlist (and any the agent's own research surfaces), run `market_research.research(ticker)`
-   - Hybrid approach: use fundamentals (valuation, growth, margins, ROE, debt) to decide if a company is worth owning at all; use technicals (RSI, SMA50/200, distance from 52w high/low) plus recent news to time entries/exits
-   - Reasoning/judgment happens here, in the agent -- this is NOT a hardcoded formula. Treat the tool output as evidence, not a verdict.
+1. **Pull current state** -- `trading212_client.get_portfolio()` and `get_cash()`
 
-3. **Apply risk limits before any trade**
-   - Would a BUY push this position over 15% of portfolio value? -> size down or skip
-   - Does portfolio already hold the pre-agreed minimum diversification? -> factor into how much conviction is needed to concentrate further
-   - Is an existing position down >=20% from cost basis? -> exit regardless of thesis (hard stop-loss, no exceptions)
+2. **Unconditional stop-loss check** -- runs first, before even looking at
+   recommendations. Any holding down >=20% from cost basis is sold
+   immediately regardless of what the cloud recommended or didn't. This is a
+   hard rule with no override.
 
-4. **Execute**
-   - `trading212_client.place_market_order(ticker, signed_quantity, idempotency_key=f"{date}-{ticker}-{action}")`
-   - Record the fill: `portfolio_tracker.log_trade(action, ticker, quantity, price, reasoning)`
+3. **Process recommendations** (skipped if `research/latest_recommendations.json`'s
+   `generated_at` was already processed -- see `data/last_processed_research.json`):
+   - `HOLD` -> no action
+   - `SELL` -> full exit, but blocked if it would drop total holdings below 5 (diversification floor) -- unless it's a stop-loss, which is unconditional and already handled in step 2
+   - `BUY` -> target weight is capped at 15% of portfolio value regardless of what the recommendation asked for; incremental buy size = capped target value minus what's already held minus insufficient cash; trades under £50 are skipped as noise
 
-5. **Notify**
-   - `slack_notify.send_message(...)` after every executed trade: what was bought/sold, quantity, price, and the one-line reasoning
-   - Also notify on errors (API failure, rate limit exhausted, risk-limit block) so silence never means "nothing happened" ambiguously
+4. **Execute** -- `trading212_client.place_market_order(ticker, signed_quantity, idempotency_key=f"{date}-{session}-{ticker}-{action}")`, then `portfolio_tracker.log_trade(...)`
 
-6. **Weekly/periodic**
-   - `portfolio_tracker.performance()` to check cumulative alpha vs S&P 500
-   - Send a short Slack performance summary periodically (not necessarily daily -- avoid notification fatigue)
+5. **Snapshot + notify** -- `data/current_holdings.json` and a
+   `portfolio_tracker.snapshot(...)` are written every run regardless of
+   whether trades happened. Slack is notified only if a trade actually
+   executed or an error occurred -- **silence means "checked, nothing to do,"
+   not "didn't run."** Weekly, also check `portfolio_tracker.performance()`
+   and send a short alpha-vs-S&P-500 summary.
+
+## Schedule
+Three cloud research routines + three matching local `launchd` jobs, timed
+so the local job runs ~15 minutes after its cloud counterpart pushes (git
+pull latency + a safety margin):
+
+| Session | Cloud research (UTC) | Local execution (UTC) |
+|---|---|---|
+| premarket | *(filled in when routines are created)* | |
+| midday | | |
+| postmarket | | |
+
+Routine IDs and exact cron expressions are recorded here once created via
+`RemoteTrigger` -- see the routines at https://claude.ai/code/routines.
+Local launchd job plists live in `~/Library/LaunchAgents/`.
+
+**Caveat:** cloud routine cron expressions are fixed UTC; US market-hour-relative
+times will drift by an hour around US DST transitions (roughly early March and
+early November) since the cron doesn't auto-adjust. Revisit twice a year.
 
 ## Edge cases / things learned so far
 - **Auth is HTTP Basic, not a raw key.** Trading 212 requires

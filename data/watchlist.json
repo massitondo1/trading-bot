@@ -1,0 +1,20 @@
+{
+  "last_updated": "2026-07-24",
+  "tickers": [
+    {"yahoo_ticker": "GOOGL", "t212_ticker": "GOOGL_US_EQ", "sector": "Communication Services", "status": "held", "conviction": "high", "notes": "15.9x PE for 24% rev growth, RSI 25 oversold at initial buy. High conviction."},
+    {"yahoo_ticker": "NVO", "t212_ticker": "NVO_US_EQ", "sector": "Healthcare", "status": "held", "conviction": "high", "notes": "11.7x PE, 71% ROE, 24% rev growth. Selloff on Lilly litigation/GLP-1 competition looked overdone vs fundamentals at buy."},
+    {"yahoo_ticker": "JPM", "t212_ticker": "JPM_US_EQ", "sector": "Financial Services", "status": "held", "conviction": "high", "notes": "15x PE, 30% rev growth, was breaking out to 52w highs at buy."},
+    {"yahoo_ticker": "MSFT", "t212_ticker": "MSFT_US_EQ", "sector": "Technology", "status": "held", "conviction": "high", "notes": "Quality compounder, was down 29% from highs at buy, 34% ROE, low debt."},
+    {"yahoo_ticker": "AMZN", "t212_ticker": "AMZN_US_EQ", "sector": "Consumer Cyclical", "status": "held", "conviction": "medium", "notes": "Reasonable valuation for 75% earnings growth, mild pullback at buy."},
+    {"yahoo_ticker": "V", "t212_ticker": "V_US_EQ", "sector": "Financial Services", "status": "held", "conviction": "medium", "notes": "High-ROE (60%) payments compounder, fairly valued not cheap."},
+    {"yahoo_ticker": "AZN.L", "t212_ticker": "AZNl_EQ", "sector": "Healthcare", "status": "held", "conviction": "medium", "notes": "Cheap forward PE 14.8x, RSI 28.6 oversold at buy. UK/currency diversification."},
+    {"yahoo_ticker": "ASML", "t212_ticker": null, "sector": "Technology", "status": "rejected", "conviction": "low", "notes": "60.7x trailing PE too rich despite quality; priceToBook figure looked like a data anomaly, worth re-checking. Re-evaluate if it pulls back further."},
+    {"yahoo_ticker": "UNH", "t212_ticker": null, "sector": "Healthcare", "status": "rejected", "conviction": "low", "notes": "Revenue growth flat (0.4%) despite earnings recovery narrative -- weak underlying thesis. Watch for reacceleration."},
+    {"yahoo_ticker": "LLY", "t212_ticker": null, "sector": "Healthcare", "status": "rejected", "conviction": "medium", "notes": "Strong grower but expensive (42.5x PE) and near 52w highs -- no margin of safety. Correlated with NVO (direct GLP-1 competitor); picked NVO instead for better entry."},
+    {"yahoo_ticker": "COST", "t212_ticker": null, "sector": "Consumer Defensive", "status": "rejected", "conviction": "low", "notes": "47x PE too rich for a 3% margin retailer even after pullback."},
+    {"yahoo_ticker": "CAT", "t212_ticker": null, "sector": "Industrials", "status": "rejected", "conviction": "low", "notes": "44x PE expensive despite oversold RSI; high leverage (D/E 230). Re-evaluate if valuation compresses."},
+    {"yahoo_ticker": "XOM", "t212_ticker": null, "sector": "Energy", "status": "rejected", "conviction": "low", "notes": "RSI 84.7 badly overbought, earnings growth declining (-43%) despite cheap forward PE. Bad entry timing, avoid chasing."},
+    {"yahoo_ticker": "PG", "t212_ticker": null, "sector": "Consumer Defensive", "status": "rejected", "conviction": "low", "notes": "Fair valuation but uninspiring growth (~6-7%). Defensive stabilizer, not an alpha source."},
+    {"yahoo_ticker": "ULVR.L", "t212_ticker": "ULVRl_EQ", "sector": "Consumer Defensive", "status": "rejected", "conviction": "medium", "notes": "Decent value/defensive diversifier but active McCormick M&A situation adds event-driven uncertainty. Revisit once deal terms are clearer."}
+  ]
+}

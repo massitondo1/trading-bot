@@ -1,0 +1,75 @@
+{
+  "as_of": "2026-07-24",
+  "holdings": [
+    {
+      "ticker": "NVO_US_EQ",
+      "name": "Novo Nordisk",
+      "quantity": 190.0,
+      "avg_price_paid": 48.92,
+      "current_price": 49.05,
+      "current_value_gbp": 6984.56,
+      "weight_pct": 13.95,
+      "unrealized_pl_pct": 0.15
+    },
+    {
+      "ticker": "GOOGL_US_EQ",
+      "name": "Alphabet (Class A)",
+      "quantity": 29.0,
+      "avg_price_paid": 318.15,
+      "current_price": 319.84,
+      "current_value_gbp": 6951.48,
+      "weight_pct": 13.88,
+      "unrealized_pl_pct": 0.41
+    },
+    {
+      "ticker": "AMZN_US_EQ",
+      "name": "Amazon",
+      "quantity": 34.0,
+      "avg_price_paid": 232.0,
+      "current_price": 232.94,
+      "current_value_gbp": 5935.67,
+      "weight_pct": 11.85,
+      "unrealized_pl_pct": 0.29
+    },
+    {
+      "ticker": "AZNl_EQ",
+      "name": "AstraZeneca",
+      "quantity": 39.0,
+      "avg_price_paid": 12692.0,
+      "current_price": 12740.2,
+      "current_value_gbp": 4968.68,
+      "weight_pct": 9.92,
+      "unrealized_pl_pct": 0.38
+    },
+    {
+      "ticker": "MSFT_US_EQ",
+      "name": "Microsoft",
+      "quantity": 22.0,
+      "avg_price_paid": 383.39,
+      "current_price": 385.15,
+      "current_value_gbp": 6350.37,
+      "weight_pct": 12.68,
+      "unrealized_pl_pct": 0.34
+    },
+    {
+      "ticker": "V_US_EQ",
+      "name": "Visa",
+      "quantity": 20.0,
+      "avg_price_paid": 354.56,
+      "current_price": 355.42,
+      "current_value_gbp": 5327.44,
+      "weight_pct": 10.64,
+      "unrealized_pl_pct": 0.12
+    },
+    {
+      "ticker": "JPM_US_EQ",
+      "name": "JPMorgan Chase & Co",
+      "quantity": 24.0,
+      "avg_price_paid": 350.32,
+      "current_price": 352.09,
+      "current_value_gbp": 6333.03,
+      "weight_pct": 12.65,
+      "unrealized_pl_pct": 0.39
+    }
+  ]
+}
