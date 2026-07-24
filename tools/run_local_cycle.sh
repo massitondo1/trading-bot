@@ -6,6 +6,7 @@
 # Usage: run_local_cycle.sh <session-name>   (session-name: premarket|midday|postmarket)
 set -euo pipefail
 
+export PATH="/usr/local/bin:/opt/homebrew/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 PROJECT_DIR="/Users/massimilianotondo/Documents/Agentic Workflows/FIrst Agentic Workflow"
 SESSION="${1:-manual}"
 LOG_FILE="$PROJECT_DIR/.tmp/local_cycle_$(date +%Y%m%d_%H%M%S).log"

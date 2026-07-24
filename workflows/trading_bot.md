@@ -122,15 +122,22 @@ Three cloud research routines + three matching local `launchd` jobs, timed
 so the local job runs ~15 minutes after its cloud counterpart pushes (git
 pull latency + a safety margin):
 
-| Session | Cloud research (UTC) | Local execution (UTC) |
-|---|---|---|
-| premarket | *(filled in when routines are created)* | |
-| midday | | |
-| postmarket | | |
+| Session | Cloud research (UTC) | Local execution (UTC) | Routine ID |
+|---|---|---|---|
+| premarket | 12:00 (`0 12 * * 1-5`) | 12:15 | `trig_01U4U1PVkfJzGNHumvw32Xwp` |
+| midday | 16:00 (`0 16 * * 1-5`) | 16:15 | `trig_01Qkb7eBXkDA1rRCGcSZUiAT` |
+| postmarket | 20:45 (`45 20 * * 1-5`) | 21:00 | `trig_01Q3LEQxfeHC8pmLXuDxagtv` |
 
-Routine IDs and exact cron expressions are recorded here once created via
-`RemoteTrigger` -- see the routines at https://claude.ai/code/routines.
-Local launchd job plists live in `~/Library/LaunchAgents/`.
+All weekdays only (`1-5`). See/manage at https://claude.ai/code/routines
+(cannot be deleted via API, only there). Local launchd job plists live in
+`~/Library/LaunchAgents/com.tradingbot.*.plist`.
+
+**Repo visibility note:** `massitondo1/trading-bot` is currently **public**.
+This was required to unblock the cloud routine's git clone (private-repo
+access via GitHub connectors didn't work for this CCR checkout path as of
+2026-07-24) -- it contains no secrets (`.env` is gitignored, never
+committed), but the trading strategy/code and trade history are visible to
+anyone with the link.
 
 **Caveat:** cloud routine cron expressions are fixed UTC; US market-hour-relative
 times will drift by an hour around US DST transitions (roughly early March and
