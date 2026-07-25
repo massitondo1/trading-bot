@@ -7,7 +7,7 @@
 set -euo pipefail
 
 export PATH="/usr/local/bin:/opt/homebrew/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
-PROJECT_DIR="/Users/massimilianotondo/Documents/Agentic Workflows/FIrst Agentic Workflow"
+PROJECT_DIR="/Users/massimilianotondo/trading-bot"
 SESSION="${1:-manual}"
 LOG_FILE="$PROJECT_DIR/.tmp/local_cycle_$(date +%Y%m%d_%H%M%S).log"
 
