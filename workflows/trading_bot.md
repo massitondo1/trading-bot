@@ -14,14 +14,18 @@ This bot runs in two halves that never share credentials:
    `massitondo1/trading-bot`) -- no Trading 212/Slack credentials, does pure
    research and writes `research/latest_recommendations.json`. Its full SOP
    is [`workflows/cloud_research.md`](cloud_research.md) -- read that for the
-   research methodology.
+   research methodology. A second, weekly cloud routine writes a narrative
+   Friday wrap-up instead of trade recommendations -- see
+   [`workflows/weekly_wrapup.md`](weekly_wrapup.md).
 2. **Local executor** (`tools/apply_recommendations.py`, run via `launchd` on
    the user's Mac through `tools/run_local_cycle.sh`) -- holds the real
    credentials in `.env`. Reads the cloud's recommendations, applies the hard
    risk limits below (which the cloud does NOT enforce -- it only recommends
    within them), executes what qualifies, logs it, snapshots the portfolio,
    notifies Slack, and pushes updated state back to the repo so the next
-   cloud session has fresh context.
+   cloud session has fresh context. A separate weekly local job
+   (`tools/deliver_weekly_wrapup.sh`) does no trading logic -- it just reads
+   the cloud's wrap-up file and posts it to Slack.
 
 Git is the handoff mechanism between the two halves -- see "Data flow" below.
 This document describes the local-execution half in detail; this is the only
@@ -42,6 +46,11 @@ calculations run from. Trade log in `data/trade_log.csv`.
 **Scheduling set up 2026-07-24**: 3x/day cloud research routines (pre-market,
 midday, post-market) plus matching local `launchd` executor jobs. See
 "Schedule" section below for exact times and routine IDs.
+
+**Weekly wrap-up added 2026-07-25**: a Friday cloud routine writes a
+narrative reflection (trades made and why, major news, thesis checks, next
+week's plan) to `research/weekly_wrapup/<date>.md`; a matching weekly local
+`launchd` job delivers it to Slack. See "Schedule" below.
 
 Do NOT switch to `live` until:
 - At least 4-6 weeks of demo trading history exists in `data/trade_log.csv`
@@ -75,6 +84,7 @@ Do NOT switch to `live` until:
 - `tools/portfolio_tracker.py` -- trade log + daily snapshot + performance vs S&P 500
 - `tools/slack_notify.py` -- send a message after every trade and on any error
 - `tools/run_local_cycle.sh` -- the launchd entry point: git pull -> refresh instrument reference if stale -> `apply_recommendations.py` -> git add/commit/push `data/`
+- `tools/deliver_weekly_wrapup.py` / `tools/deliver_weekly_wrapup.sh` -- weekly launchd entry point: git pull -> find latest `research/weekly_wrapup/*.md` -> post to Slack (chunked, idempotent via `data/last_delivered_wrapup.json`) -> commit/push that marker
 
 ## Data flow (how cloud and local hand off without sharing credentials)
 ```
@@ -127,10 +137,15 @@ pull latency + a safety margin):
 | premarket | 12:00 (`0 12 * * 1-5`) | 12:15 | `trig_01U4U1PVkfJzGNHumvw32Xwp` |
 | midday | 16:00 (`0 16 * * 1-5`) | 16:15 | `trig_01Qkb7eBXkDA1rRCGcSZUiAT` |
 | postmarket | 20:45 (`45 20 * * 1-5`) | 21:00 | `trig_01Q3LEQxfeHC8pmLXuDxagtv` |
+| weekly wrap-up | Fri 21:15 (`15 21 * * 5`) | Fri 21:45 | `trig_013W8Zr3saCYr9UWvmqJsYQr` |
 
-All weekdays only (`1-5`). See/manage at https://claude.ai/code/routines
-(cannot be deleted via API, only there). Local launchd job plists live in
-`~/Library/LaunchAgents/com.tradingbot.*.plist`.
+All weekdays only (`1-5`), weekly wrap-up Fridays only (`5`). See/manage at
+https://claude.ai/code/routines (cannot be deleted via API, only there).
+Local launchd job plists live in `~/Library/LaunchAgents/com.tradingbot.*.plist`
+-- the weekly one (`com.tradingbot.weeklywrapup.plist`) uses `StartCalendarInterval`
+`Weekday: 6, Hour: 0, Minute: 45` (system timezone is EEST/UTC+3 in summer,
+so Friday 21:45 UTC lands at Saturday 00:45 local -- same DST caveat as the
+daily jobs below).
 
 **Repo visibility note:** `massitondo1/trading-bot` is currently **public**.
 This was required to unblock the cloud routine's git clone (private-repo

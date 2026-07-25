@@ -10,12 +10,13 @@ Usage as a script:
     python tools/portfolio_tracker.py log-trade BUY AAPL_US_EQ 2 195.30 "strong FCF growth, hybrid screen pick"
     python tools/portfolio_tracker.py snapshot 10432.11
     python tools/portfolio_tracker.py performance
+    python tools/portfolio_tracker.py weekly-performance
     python tools/portfolio_tracker.py position-performance
 """
 import json
 import sys
 from pathlib import Path
-from datetime import date
+from datetime import date, timedelta
 
 import pandas as pd
 import yfinance as yf
@@ -77,6 +78,47 @@ def performance() -> dict:
     }
 
 
+def weekly_performance(days: int = 7) -> dict:
+    """
+    Like performance(), but windowed to the trailing N days instead of since
+    inception -- used by the weekly wrap-up to report "how did this week go"
+    rather than the all-time number. See workflows/weekly_wrapup.md.
+    """
+    _ensure_files()
+    df = pd.read_csv(HISTORY_LOG)
+    if df.empty:
+        return {"error": "no snapshots yet"}
+
+    cutoff = (date.today() - timedelta(days=days)).isoformat()
+    window = df[df["date"] >= cutoff]
+    if len(window) < 2:
+        return {"error": f"need at least 2 snapshots in the last {days} days"}
+
+    first, last = window.iloc[0], window.iloc[-1]
+    portfolio_return = (last["portfolio_value"] / first["portfolio_value"] - 1) * 100
+
+    # yfinance occasionally returns NaN for ^GSPC on the most recent trading
+    # day (data not finalized yet) -- fall back to the nearest valid close on
+    # either edge of the window rather than propagating NaN into the report.
+    valid_sp500 = window.dropna(subset=["sp500_close"])
+    result = {
+        "window_days": days,
+        "since": first["date"],
+        "as_of": last["date"],
+        "portfolio_return_pct": round(float(portfolio_return), 2),
+    }
+    if len(valid_sp500) >= 2:
+        sp_first, sp_last = valid_sp500.iloc[0], valid_sp500.iloc[-1]
+        sp500_return = (sp_last["sp500_close"] / sp_first["sp500_close"] - 1) * 100
+        result["sp500_return_pct"] = round(float(sp500_return), 2)
+        result["alpha_pct"] = round(float(portfolio_return - sp500_return), 2)
+    else:
+        result["sp500_return_pct"] = None
+        result["alpha_pct"] = None
+        result["notes"] = "S&P 500 close missing/NaN for enough of this window to compute alpha"
+    return result
+
+
 def position_performance() -> list:
     """
     Joins data/current_holdings.json (live prices/weights) with the full
@@ -126,6 +168,8 @@ def _main():
         print(json.dumps(snapshot(float(sys.argv[2])), indent=2, default=str))
     elif cmd == "performance":
         print(json.dumps(performance(), indent=2, default=str))
+    elif cmd == "weekly-performance":
+        print(json.dumps(weekly_performance(), indent=2, default=str))
     elif cmd == "position-performance":
         print(json.dumps(position_performance(), indent=2, default=str))
     else:
