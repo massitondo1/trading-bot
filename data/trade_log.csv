@@ -6,3 +6,4 @@ date,action,ticker,quantity,price,reasoning
 2026-07-24,BUY,AMZN_US_EQ,34.0,232.0,"Reasonable valuation for 75% earnings growth, mild 16% pullback, RSI approaching oversold"
 2026-07-24,BUY,V_US_EQ,20.0,354.56,"High-ROE (60%) payments compounder, fairly valued, steady uptrend"
 2026-07-24,BUY,AZNl_EQ,39.0,12692.0,"Cheap forward PE 14.8x, RSI 28.6 oversold, UK/pharma + currency diversification"
+2026-07-27,BUY,SHEL_US_EQ,62.0,86.37000274658203,"Cheap at 13.5x trailing / 9.9x forward PE with 26.6% earnings growth (unlike XOM's -43% decline on a similar cheap-forward-PE setup, rejected instead). 3.5% dividend yield, RSI 67.8 in a firm but not extreme uptrend (-7.4% off 52w high). Zero current Energy exposure -- genuine diversifier against the portfolio's existing Tech/Healthcare/Financials/Comm-Services concentration."

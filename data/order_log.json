@@ -173,5 +173,30 @@
         "currency": "GBX"
       }
     }
+  },
+  "2026-07-27-premarket-SHEL_US_EQ-BUY": {
+    "status": "submitted",
+    "ticker": "SHEL_US_EQ",
+    "quantity": 62,
+    "result": {
+      "id": 52550433648,
+      "strategy": "QUANTITY",
+      "type": "MARKET",
+      "ticker": "SHEL_US_EQ",
+      "quantity": 62,
+      "filledQuantity": 0,
+      "status": "NEW",
+      "currency": "GBP",
+      "extendedHours": false,
+      "initiatedFrom": "API",
+      "side": "BUY",
+      "createdAt": "2026-07-28T02:40:58.143+03:00",
+      "instrument": {
+        "ticker": "SHEL_US_EQ",
+        "name": "Shell",
+        "isin": "US7802593050",
+        "currency": "USD"
+      }
+    }
   }
 }
