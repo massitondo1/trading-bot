@@ -69,7 +69,20 @@ class Trading212Client:
         url = f"{self.base_url}{path}"
         last_err = None
         for attempt in range(retries):
-            resp = self.session.request(method, url, timeout=20, **kwargs)
+            try:
+                resp = self.session.request(method, url, timeout=20, **kwargs)
+            except (requests.exceptions.ConnectionError,
+                    requests.exceptions.Timeout,
+                    requests.exceptions.ChunkedEncodingError) as e:
+                last_err = e
+                if attempt == retries - 1:
+                    raise Trading212Error(
+                        f"{method} {path} failed after {retries} retries (network error): {e}"
+                    ) from e
+                wait = 2 ** attempt
+                time.sleep(wait)
+                continue
+
             if resp.status_code == 429:
                 wait = 2 ** attempt
                 time.sleep(wait)

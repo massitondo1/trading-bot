@@ -17,15 +17,25 @@ This bot runs in two halves that never share credentials:
    research methodology. A second, weekly cloud routine writes a narrative
    Friday wrap-up instead of trade recommendations -- see
    [`workflows/weekly_wrapup.md`](weekly_wrapup.md).
-2. **Local executor** (`tools/apply_recommendations.py`, run via `launchd` on
-   the user's Mac through `tools/run_local_cycle.sh`) -- holds the real
-   credentials in `.env`. Reads the cloud's recommendations, applies the hard
-   risk limits below (which the cloud does NOT enforce -- it only recommends
-   within them), executes what qualifies, logs it, snapshots the portfolio,
-   notifies Slack, and pushes updated state back to the repo so the next
-   cloud session has fresh context. A separate weekly local job
-   (`tools/deliver_weekly_wrapup.sh`) does no trading logic -- it just reads
-   the cloud's wrap-up file and posts it to Slack.
+2. **Local executor** (`tools/apply_recommendations.py`, run via a scheduled
+   GitHub Actions workflow, [`.github/workflows/execution-cycle.yml`](../.github/workflows/execution-cycle.yml))
+   -- holds the real credentials as GitHub Actions repository secrets. Each
+   run checks out the repo fresh, installs dependencies, and invokes
+   `apply_recommendations.py` with credentials injected as env vars -- no
+   laptop or local process needs to be running. Reads the cloud's
+   recommendations, applies the hard risk limits below (which the cloud does
+   NOT enforce -- it only recommends within them), executes what qualifies,
+   logs it, snapshots the portfolio, notifies Slack, and pushes updated
+   state back to the repo so the next cloud session has fresh context. A
+   separate weekly workflow ([`.github/workflows/weekly-wrapup-delivery.yml`](../.github/workflows/weekly-wrapup-delivery.yml))
+   does no trading logic -- it just reads the cloud's wrap-up file and posts
+   it to Slack.
+
+   `tools/run_local_cycle.sh` and `tools/deliver_weekly_wrapup.sh` (the
+   original `launchd`-based scripts) are retained in the repo as a
+   documented manual/offline fallback -- e.g. for debugging locally via a
+   `.venv` without needing to trigger CI -- but are no longer what's
+   scheduled.
 
 Git is the handoff mechanism between the two halves -- see "Data flow" below.
 This document describes the local-execution half in detail; this is the only
@@ -71,20 +81,21 @@ Do NOT switch to `live` until:
   endpoint is beta and not idempotent, retries can duplicate a live order
 
 ## Inputs required
-- `.env` populated with `TRADING212_API_KEY`, `TRADING212_API_SECRET`,
-  `TRADING212_API_MODE`, `SLACK_WEBHOOK_URL` (local only -- never present in
-  the cloud repo checkout)
+- `TRADING212_API_KEY`, `TRADING212_API_SECRET`, `TRADING212_API_MODE`,
+  `SLACK_WEBHOOK_URL` set as GitHub Actions repository secrets, injected as
+  env vars only into the execution-cycle/weekly-wrapup workflow jobs --
+  never present in the cloud research checkout
 - `research/latest_recommendations.json` written by the cloud research agent
 
 ## Tools used
 - `tools/market_research.py` -- fundamentals, technicals, news per ticker (no API key needed; used by the cloud agent)
-- `tools/trading212_client.py` -- account/cash/portfolio state, place orders (local only, needs credentials)
-- `tools/apply_recommendations.py` -- the deterministic risk-gated executor described below (local only)
-- `tools/refresh_instruments_reference.py` -- weekly refresh of `data/instruments_reference.json`, called automatically by `run_local_cycle.sh`
+- `tools/trading212_client.py` -- account/cash/portfolio state, place orders (execution workflow only, needs credentials)
+- `tools/apply_recommendations.py` -- the deterministic risk-gated executor described below (execution workflow only)
+- `tools/refresh_instruments_reference.py` -- weekly refresh of `data/instruments_reference.json`, called automatically by the execution-cycle workflow
 - `tools/portfolio_tracker.py` -- trade log + daily snapshot + performance vs S&P 500
 - `tools/slack_notify.py` -- send a message after every trade and on any error
-- `tools/run_local_cycle.sh` -- the launchd entry point: git pull -> refresh instrument reference if stale -> `apply_recommendations.py` -> git add/commit/push `data/`
-- `tools/deliver_weekly_wrapup.py` / `tools/deliver_weekly_wrapup.sh` -- weekly launchd entry point: git pull -> find latest `research/weekly_wrapup/*.md` -> post to Slack (chunked, idempotent via `data/last_delivered_wrapup.json`) -> commit/push that marker
+- `tools/run_local_cycle.sh` -- retained as a reference implementation of the execution steps (git pull -> refresh instrument reference if stale -> `apply_recommendations.py` -> git add/commit/push `data/`); the actual scheduled entry point is now [`.github/workflows/execution-cycle.yml`](../.github/workflows/execution-cycle.yml), which re-expresses these same steps as CI steps
+- `tools/deliver_weekly_wrapup.py` / `tools/deliver_weekly_wrapup.sh` -- `deliver_weekly_wrapup.sh` is retained as a reference implementation; the actual scheduled entry point is [`.github/workflows/weekly-wrapup-delivery.yml`](../.github/workflows/weekly-wrapup-delivery.yml): git pull -> find latest `research/weekly_wrapup/*.md` -> post to Slack (chunked, idempotent via `data/last_delivered_wrapup.json`) -> commit/push that marker
 
 ## Data flow (how cloud and local hand off without sharing credentials)
 ```
@@ -128,24 +139,24 @@ after, keeping the divergence window small.
    and send a short alpha-vs-S&P-500 summary.
 
 ## Schedule
-Three cloud research routines + three matching local `launchd` jobs, timed
-so the local job runs ~15 minutes after its cloud counterpart pushes (git
-pull latency + a safety margin):
+Three cloud research routines + three matching GitHub Actions execution
+workflow runs, timed so the execution run fires ~15 minutes after its cloud
+counterpart pushes (git pull latency + a safety margin):
 
-| Session | Cloud research (UTC) | Local execution (UTC) | Routine ID |
+| Session | Cloud research (UTC) | GitHub Actions execution (UTC) | Routine ID |
 |---|---|---|---|
 | premarket | 12:00 (`0 12 * * 1-5`) | 12:15 | `trig_01U4U1PVkfJzGNHumvw32Xwp` |
 | midday | 16:00 (`0 16 * * 1-5`) | 16:15 | `trig_01Qkb7eBXkDA1rRCGcSZUiAT` |
 | postmarket | 20:45 (`45 20 * * 1-5`) | 21:00 | `trig_01Q3LEQxfeHC8pmLXuDxagtv` |
 | weekly wrap-up | Fri 21:15 (`15 21 * * 5`) | Fri 21:45 | `trig_013W8Zr3saCYr9UWvmqJsYQr` |
 
-All weekdays only (`1-5`), weekly wrap-up Fridays only (`5`). See/manage at
-https://claude.ai/code/routines (cannot be deleted via API, only there).
-Local launchd job plists live in `~/Library/LaunchAgents/com.tradingbot.*.plist`
--- the weekly one (`com.tradingbot.weeklywrapup.plist`) uses `StartCalendarInterval`
-`Weekday: 6, Hour: 0, Minute: 45` (system timezone is EEST/UTC+3 in summer,
-so Friday 21:45 UTC lands at Saturday 00:45 local -- same DST caveat as the
-daily jobs below).
+All weekdays only (`1-5`), weekly wrap-up Fridays only (`5`). Cloud routines
+are managed at https://claude.ai/code/routines (cannot be deleted via API,
+only there). GitHub Actions execution schedules live in
+[`.github/workflows/execution-cycle.yml`](../.github/workflows/execution-cycle.yml)
+(the three daily sessions) and
+[`.github/workflows/weekly-wrapup-delivery.yml`](../.github/workflows/weekly-wrapup-delivery.yml)
+(Friday), both driven by GitHub's `schedule:` cron trigger.
 
 **Repo visibility note:** `massitondo1/trading-bot` is currently **public**.
 This was required to unblock the cloud routine's git clone (private-repo
@@ -154,9 +165,10 @@ access via GitHub connectors didn't work for this CCR checkout path as of
 committed), but the trading strategy/code and trade history are visible to
 anyone with the link.
 
-**Caveat:** cloud routine cron expressions are fixed UTC; US market-hour-relative
-times will drift by an hour around US DST transitions (roughly early March and
-early November) since the cron doesn't auto-adjust. Revisit twice a year.
+**Caveat:** both the cloud routine and GitHub Actions `schedule:` cron
+expressions are fixed UTC; US market-hour-relative times will drift by an
+hour around US DST transitions (roughly early March and early November)
+since neither cron auto-adjusts. Revisit twice a year.
 
 ## Edge cases / things learned so far
 - **Auth is HTTP Basic, not a raw key.** Trading 212 requires
@@ -183,6 +195,15 @@ early November) since the cron doesn't auto-adjust. Revisit twice a year.
 - Rate limits observed from docs: ~1 order request per 1-2s, portfolio reads
   ~1 per 5s, historical data ~6/min. The client backs off automatically on
   HTTP 429 with exponential wait, but don't hammer these endpoints in a tight loop.
+- **Connection resets happen and aren't fatal on their own.** Two back-to-back
+  local cycles (2026-07-26) died with an uncaught `ConnectionResetError` on
+  the very first Trading 212 API call, with no retry -- turned out
+  `_request()`'s retry loop only handled HTTP 429, not transport-level
+  failures. Fixed by also catching `requests.exceptions.ConnectionError`
+  (which wraps OS-level resets), `Timeout`, and `ChunkedEncodingError` with
+  the same exponential backoff. This matters more now that execution runs
+  unattended on GitHub Actions -- nobody's around to notice a silent crash
+  and manually retry.
 - `yfinance` needs no API key but can occasionally return empty data for
   illiquid/foreign tickers -- `compute_technicals` returns `{"error": ...}` in
   that case; treat as "insufficient data, skip" rather than crashing the cycle.

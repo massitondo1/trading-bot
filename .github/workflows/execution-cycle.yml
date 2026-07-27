@@ -1,0 +1,99 @@
+name: Execution Cycle
+
+on:
+  schedule:
+    - cron: '15 12 * * 1-5'   # premarket exec, ~15min after 12:00 UTC cloud push
+    - cron: '15 16 * * 1-5'   # midday exec
+    - cron: '0 21 * * 1-5'    # postmarket exec
+  workflow_dispatch:
+    inputs:
+      session:
+        description: 'Session to run'
+        required: true
+        type: choice
+        options: [premarket, midday, postmarket]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trading-bot-execution-cycle
+  cancel-in-progress: false   # never cancel a run that may be mid-trade; queue instead
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TRADING212_API_KEY: ${{ secrets.TRADING212_API_KEY }}
+      TRADING212_API_SECRET: ${{ secrets.TRADING212_API_SECRET }}
+      TRADING212_API_MODE: ${{ secrets.TRADING212_API_MODE }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - name: Resolve session name
+        id: session
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "session=${{ inputs.session }}" >> "$GITHUB_OUTPUT"
+          else
+            case "${{ github.event.schedule }}" in
+              '15 12 * * 1-5') echo "session=premarket" >> "$GITHUB_OUTPUT" ;;
+              '15 16 * * 1-5') echo "session=midday" >> "$GITHUB_OUTPUT" ;;
+              '0 21 * * 1-5')  echo "session=postmarket" >> "$GITHUB_OUTPUT" ;;
+              *) echo "Unrecognized schedule: ${{ github.event.schedule }}"; exit 1 ;;
+            esac
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -q -r requirements.txt
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Pull latest
+        run: git pull --quiet origin main
+
+      - name: Refresh instruments reference if stale
+        run: |
+          REF_FILE="data/instruments_reference.json"
+          if [ ! -f "$REF_FILE" ]; then
+            NEEDS_REFRESH=1
+          else
+            MTIME=$(date -u -d "$(git log -1 --format=%cI -- "$REF_FILE")" +%s)
+            NOW=$(date -u +%s)
+            AGE=$(( NOW - MTIME ))
+            if [ "$AGE" -gt 604800 ]; then NEEDS_REFRESH=1; else NEEDS_REFRESH=0; fi
+          fi
+          if [ "${NEEDS_REFRESH:-0}" = "1" ]; then
+            python tools/refresh_instruments_reference.py
+          fi
+
+      - name: Run execution cycle
+        run: python tools/apply_recommendations.py "${{ steps.session.outputs.session }}"
+
+      - name: Commit and push updated state
+        run: |
+          git add data/
+          if ! git diff --cached --quiet; then
+            git commit -q -m "Local execution cycle (${{ steps.session.outputs.session }}): update holdings/trade log"
+            git pull --quiet --rebase origin main
+            git push --quiet origin main
+          fi
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sf --retry 2 --retry-delay 2 -X POST -H 'Content-Type: application/json' \
+            -d "{\"text\": \":rotating_light: Trading bot execution cycle FAILED — session=${{ steps.session.outputs.session }}, run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"

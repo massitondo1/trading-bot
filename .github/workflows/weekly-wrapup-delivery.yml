@@ -1,0 +1,59 @@
+name: Weekly Wrap-up Delivery
+
+on:
+  schedule:
+    - cron: '45 21 * * 5'   # Fri 21:45 UTC, ~30min after Fri 21:15 UTC cloud wrap-up push
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trading-bot-weekly-wrapup
+  cancel-in-progress: false
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -q -r requirements.txt
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Pull latest
+        run: git pull --quiet origin main
+
+      - name: Deliver weekly wrap-up
+        run: python tools/deliver_weekly_wrapup.py
+
+      - name: Commit and push delivery marker
+        run: |
+          git add data/last_delivered_wrapup.json
+          if ! git diff --cached --quiet; then
+            git commit -q -m "Weekly wrap-up delivery: mark $(date -u +%Y-%m-%d) as sent"
+            git pull --quiet --rebase origin main
+            git push --quiet origin main
+          fi
+
+      - name: Notify Slack on failure
+        if: failure()
+        run: |
+          curl -sf --retry 2 --retry-delay 2 -X POST -H 'Content-Type: application/json' \
+            -d "{\"text\": \":rotating_light: Weekly wrap-up delivery FAILED — run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"
