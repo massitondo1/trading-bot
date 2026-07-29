@@ -6,80 +6,80 @@
       "name": "Novo Nordisk",
       "quantity": 190.0,
       "avg_price_paid": 48.92,
-      "current_price": 51.33,
-      "current_value_gbp": 7333.19,
-      "weight_pct": 14.32,
-      "unrealized_pl_pct": 5.15
+      "current_price": 51.28,
+      "current_value_gbp": 7335.7,
+      "weight_pct": 14.3,
+      "unrealized_pl_pct": 5.18
     },
     {
       "ticker": "GOOGL_US_EQ",
       "name": "Alphabet (Class A)",
       "quantity": 29.0,
       "avg_price_paid": 318.15,
-      "current_price": 332.6,
-      "current_value_gbp": 7252.51,
-      "weight_pct": 14.16,
-      "unrealized_pl_pct": 4.75
+      "current_price": 334.59,
+      "current_value_gbp": 7305.51,
+      "weight_pct": 14.24,
+      "unrealized_pl_pct": 5.52
     },
     {
       "ticker": "SHEL_US_EQ",
       "name": "Shell",
       "quantity": 62.0,
       "avg_price_paid": 86.72,
-      "current_price": 88.65,
-      "current_value_gbp": 4132.74,
-      "weight_pct": 8.07,
-      "unrealized_pl_pct": 2.2
+      "current_price": 88.59,
+      "current_value_gbp": 4135.39,
+      "weight_pct": 8.06,
+      "unrealized_pl_pct": 2.27
     },
     {
       "ticker": "AMZN_US_EQ",
       "name": "Amazon",
       "quantity": 34.0,
       "avg_price_paid": 232.0,
-      "current_price": 227.64,
-      "current_value_gbp": 5819.63,
-      "weight_pct": 11.37,
-      "unrealized_pl_pct": -1.67
+      "current_price": 227.59,
+      "current_value_gbp": 5826.02,
+      "weight_pct": 11.36,
+      "unrealized_pl_pct": -1.57
     },
     {
       "ticker": "AZNl_EQ",
       "name": "AstraZeneca",
       "quantity": 39.0,
       "avg_price_paid": 12692.0,
-      "current_price": 13135.8,
-      "current_value_gbp": 5122.96,
-      "weight_pct": 10.0,
-      "unrealized_pl_pct": 3.5
+      "current_price": 13134.0,
+      "current_value_gbp": 5122.26,
+      "weight_pct": 9.98,
+      "unrealized_pl_pct": 3.48
     },
     {
       "ticker": "MSFT_US_EQ",
       "name": "Microsoft",
       "quantity": 22.0,
       "avg_price_paid": 383.39,
-      "current_price": 392.69,
-      "current_value_gbp": 6495.92,
-      "weight_pct": 12.69,
-      "unrealized_pl_pct": 2.64
+      "current_price": 392.85,
+      "current_value_gbp": 6507.13,
+      "weight_pct": 12.68,
+      "unrealized_pl_pct": 2.82
     },
     {
       "ticker": "V_US_EQ",
       "name": "Visa",
       "quantity": 20.0,
       "avg_price_paid": 354.56,
-      "current_price": 369.49,
-      "current_value_gbp": 5556.49,
-      "weight_pct": 10.85,
-      "unrealized_pl_pct": 4.43
+      "current_price": 372.61,
+      "current_value_gbp": 5610.79,
+      "weight_pct": 10.94,
+      "unrealized_pl_pct": 5.45
     },
     {
       "ticker": "JPM_US_EQ",
       "name": "JPMorgan Chase & Co",
       "quantity": 24.0,
       "avg_price_paid": 350.32,
-      "current_price": 350.39,
-      "current_value_gbp": 6323.11,
-      "weight_pct": 12.35,
-      "unrealized_pl_pct": 0.23
+      "current_price": 348.3,
+      "current_value_gbp": 6293.68,
+      "weight_pct": 12.27,
+      "unrealized_pl_pct": -0.24
     }
   ]
 }
