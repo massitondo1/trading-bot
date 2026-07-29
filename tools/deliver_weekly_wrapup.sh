@@ -18,12 +18,27 @@ cd "$PROJECT_DIR"
   git pull --quiet origin main
 
   source .venv/bin/activate
+
+  set +e
   python tools/deliver_weekly_wrapup.py
+  EXEC_STATUS=$?
+  set -e
 
   git add data/last_delivered_wrapup.json 2>/dev/null || true
+  GIT_STATUS=0
   if ! git diff --cached --quiet; then
-    git commit -q -m "Weekly wrap-up delivery: mark $(date +%Y-%m-%d) as sent"
-    git push --quiet origin main
+    set +e
+    git commit -q -m "Weekly wrap-up delivery: mark $(date +%Y-%m-%d) as sent" \
+      && git pull --quiet --rebase origin main \
+      && git push --quiet origin main
+    GIT_STATUS=$?
+    set -e
+  fi
+
+  if [ "$EXEC_STATUS" -ne 0 ] || [ "$GIT_STATUS" -ne 0 ]; then
+    python tools/slack_notify.py ":rotating_light: Weekly wrap-up delivery FAILED (local) — exec_status=$EXEC_STATUS, git_status=$GIT_STATUS, see $LOG_FILE on $(hostname)" || true
+    echo "=== $(date -u +%Y-%m-%dT%H:%M:%SZ) FAILED weekly wrap-up delivery (exec_status=$EXEC_STATUS git_status=$GIT_STATUS) ==="
+    exit 1
   fi
 
   echo "=== $(date -u +%Y-%m-%dT%H:%M:%SZ) finished weekly wrap-up delivery ==="

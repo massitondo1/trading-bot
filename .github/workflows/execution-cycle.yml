@@ -1,10 +1,15 @@
 name: Execution Cycle
 
 on:
-  schedule:
-    - cron: '15 12 * * 1-5'   # premarket exec, ~15min after 12:00 UTC cloud push
-    - cron: '15 16 * * 1-5'   # midday exec
-    - cron: '0 21 * * 1-5'    # postmarket exec
+  # Execution moved back to local launchd on 2026-07-29 (tools/run_local_cycle.sh).
+  # Schedule intentionally disabled here to avoid double-execution; this
+  # workflow is kept only as a manual fallback (workflow_dispatch) for when
+  # the local Mac is off. Re-enable these crons only if local launchd is
+  # disabled again.
+  # schedule:
+  #   - cron: '15 12 * * 1-5'   # premarket exec, ~15min after 12:00 UTC cloud push
+  #   - cron: '15 16 * * 1-5'   # midday exec
+  #   - cron: '0 21 * * 1-5'    # postmarket exec
   workflow_dispatch:
     inputs:
       session:
@@ -86,7 +91,7 @@ jobs:
         run: |
           git add data/
           if ! git diff --cached --quiet; then
-            git commit -q -m "Local execution cycle (${{ steps.session.outputs.session }}): update holdings/trade log"
+            git commit -q -m "Execution cycle (${{ steps.session.outputs.session }}, GitHub Actions fallback): update holdings/trade log"
             git pull --quiet --rebase origin main
             git push --quiet origin main
           fi

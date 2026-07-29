@@ -1,8 +1,11 @@
 name: Weekly Wrap-up Delivery
 
 on:
-  schedule:
-    - cron: '45 21 * * 5'   # Fri 21:45 UTC, ~30min after Fri 21:15 UTC cloud wrap-up push
+  # Delivery moved back to local launchd on 2026-07-29 (tools/deliver_weekly_wrapup.sh).
+  # Schedule intentionally disabled to avoid double-delivery; kept only as a
+  # manual fallback (workflow_dispatch) for when the local Mac is off.
+  # schedule:
+  #   - cron: '45 21 * * 5'   # Fri 21:45 UTC, ~30min after Fri 21:15 UTC cloud wrap-up push
   workflow_dispatch: {}
 
 permissions:

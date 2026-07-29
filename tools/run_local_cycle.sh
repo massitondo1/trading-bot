@@ -28,12 +28,31 @@ cd "$PROJECT_DIR"
     python tools/refresh_instruments_reference.py
   fi
 
+  # Don't let a mid-run failure (e.g. a transient network error after a
+  # trade already executed) skip the commit below -- whatever landed in
+  # data/ needs to reach the repo regardless, or the next run starts from
+  # stale state and can lose track of trades/idempotency keys that already
+  # happened for real.
+  set +e
   python tools/apply_recommendations.py "$SESSION"
+  EXEC_STATUS=$?
+  set -e
 
   git add data/ 2>/dev/null || true
+  GIT_STATUS=0
   if ! git diff --cached --quiet; then
-    git commit -q -m "Local execution cycle ($SESSION): update holdings/trade log"
-    git push --quiet origin main
+    set +e
+    git commit -q -m "Execution cycle ($SESSION): update holdings/trade log" \
+      && git pull --quiet --rebase origin main \
+      && git push --quiet origin main
+    GIT_STATUS=$?
+    set -e
+  fi
+
+  if [ "$EXEC_STATUS" -ne 0 ] || [ "$GIT_STATUS" -ne 0 ]; then
+    python tools/slack_notify.py ":rotating_light: Trading bot execution cycle FAILED (local) — session=$SESSION, exec_status=$EXEC_STATUS, git_status=$GIT_STATUS, see $LOG_FILE on $(hostname)" || true
+    echo "=== $(date -u +%Y-%m-%dT%H:%M:%SZ) FAILED session=$SESSION (exec_status=$EXEC_STATUS git_status=$GIT_STATUS) ==="
+    exit 1
   fi
 
   echo "=== $(date -u +%Y-%m-%dT%H:%M:%SZ) finished session=$SESSION ==="
